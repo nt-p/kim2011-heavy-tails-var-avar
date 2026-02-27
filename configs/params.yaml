@@ -1,0 +1,7 @@
+# Central experiment settings (edit as needed)
+ticker: "^GSPC"         # S&P 500 index ticker used by yfinance
+start: "2000-01-01"
+end: null               # null = today
+alpha: 0.01             # VaR/AVaR level
+horizons: [252, 504, 1008, 2510]   # ~1y, 2y, 4y, 10y trading days
+seed: 42
