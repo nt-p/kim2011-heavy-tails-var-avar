@@ -1,99 +1,176 @@
-# Heavy-Tailed Risk Forecasting with (AR)GARCH: VaR & AVaR (Kim et al., 2011 replication)
+# Heavy-Tailed Risk Forecasting with (ARMA)–GARCH: VaR and Expected Shortfall
 
-This project replicates and extends key ideas from **Kim, Rachev, Bianchi, Mitov & Fabozzi (2011)**:
-normality-based risk models systematically understate tail risk during crisis periods, and heavy-tailed
-innovations improve the calibration of **Value-at-Risk (VaR)** and **Average Value-at-Risk / Expected Shortfall (AVaR/ES)**.
+## Overview
 
-**What I built**
-- Pulled daily S&P 500 proxy data and computed log-returns.
-- Fit benchmark volatility/risk models:
-  - Constant Volatility (CV)
-  - GARCH(1,1) with **Normal** vs **Student-t** innovations
-  - (AR)GARCH variant with an autoregressive mean component (via `arch`'s AR mean)
-- Evaluated distributional adequacy and tail calibration using:
-  - **Probability Integral Transform (PIT)** diagnostics
-  - **Kolmogorov–Smirnov (KS)** and **Anderson–Darling (AD)** tests
-  - **Christoffersen LR tests** (unconditional coverage, independence, conditional coverage)
-  - **Berkowitz LR tests** (distributional calibration of PITs, tail-focused checks)
-- Produced VaR/AVaR time series and divergence metrics (e.g., **Absolute Relative Difference (ARD)**).
+Financial returns exhibit heavy tails, volatility clustering, and extreme events that violate Gaussian assumptions. Risk models based on Normal innovations systematically underestimate extreme losses, leading to inaccurate Value-at-Risk (VaR) and Expected Shortfall (AVaR) forecasts.
 
-**Key takeaway**
-Heavy-tailed models (Student-t) materially improve tail risk calibration relative to Gaussian baselines,
-especially at short-to-medium horizons and during stress regimes.
+This project implements and evaluates volatility-based risk models on S&P 500 returns using:
+
+- Constant Volatility (CV)
+- GARCH(1,1)
+- ARMA(1,1)–GARCH(1,1)
+
+under both:
+
+- Gaussian innovations
+- Student-t innovations
+
+Models are evaluated using rigorous statistical backtests and distributional diagnostics.
 
 ---
 
-## Repository structure
+## Key Results
 
-```
+### Heavy-tailed models improve tail risk estimation
+
+Statistical goodness-of-fit tests demonstrate that Gaussian innovations are rejected, while Student-t innovations significantly improve tail modelling.
+
+| Model | Distribution | KS Test | Anderson-Darling | Interpretation |
+|------|-------------|---------|------------------|----------------|
+| CV | Normal | Rejected | Rejected | Poor fit |
+| CV | Student-t | Improved | Improved | Better tail representation |
+| GARCH | Normal | Rejected | Rejected | Underestimates risk |
+| GARCH | Student-t | Accepted / Improved | Improved | More realistic model |
+
+---
+
+### Student-t models improve VaR calibration
+
+Christoffersen likelihood ratio backtests show improved calibration using Student-t innovations.
+
+| Model | Horizon | Distribution | Coverage Test | Independence Test | Conditional Coverage |
+|------|--------|-------------|--------------|-------------------|---------------------|
+| ARMA-GARCH | Short horizon | Normal | Often rejected | Often rejected | Poor |
+| ARMA-GARCH | Short horizon | Student-t | Improved | Improved | Better |
+| ARMA-GARCH | Long horizon | Both | Mixed | Mixed | Degrades |
+
+---
+
+### Expected Shortfall captures extreme risk more accurately
+
+## AVaR Forecast Comparison
+
+![AVaR Comparison](assets/avar_comparison.png)
+
+The Student-t ARMA-GARCH model produces consistently larger (more conservative) Expected Shortfall estimates during volatile periods, reflecting improved modelling of extreme losses.
+
+---
+
+## Methodology
+
+### Data
+
+- Asset: S&P 500 Index
+- Frequency: Daily log returns
+- Source: Yahoo Finance
+
+Returns computed as:
+
+r_t = log(P_t / P_{t-1})
+
+---
+
+### Models Implemented
+
+Constant Volatility:
+r_t = μ + ε_t
+
+GARCH(1,1):
+σ_t² = ω + α ε_{t-1}² + β σ_{t-1}²
+
+ARMA(1,1)-GARCH(1,1):
+r_t = μ + φ r_{t-1} + θ ε_{t-1} + ε_t
+
+ε_t = σ_t z_t
+
+Innovations follow:
+
+- Normal distribution
+- Student-t distribution
+
+---
+
+## Risk Measures
+
+Value-at-Risk:
+VaR_α = μ_t + σ_t F^{-1}(α)
+
+Expected Shortfall:
+ES_α = E[r_t | r_t < VaR_α]
+
+Expected Shortfall captures magnitude of extreme losses beyond VaR.
+
+---
+
+## Model Validation
+
+Diagnostics performed:
+
+- Probability Integral Transform (PIT)
+- Kolmogorov-Smirnov test
+- Anderson-Darling test
+- Christoffersen coverage tests
+- Berkowitz likelihood ratio test
+
+---
+
+## Repository Structure
+
 .
-├─ notebooks/
-│  └─ project3_replication.ipynb
-├─ report/
-│  └─ Project3_Report.pdf
-├─ src/
-│  └─ kim2011_risk/
-│     ├─ __init__.py
-│     ├─ data.py
-│     ├─ models.py
-│     ├─ risk.py
-│     ├─ backtests.py
-│     └─ plots.py
-├─ tests/
-├─ configs/
-│  └─ params.yaml
-├─ requirements.txt
-└─ LICENSE
-```
+├── README.md  
+├── notebooks/  
+├── report/  
+├── src/  
+├── assets/  
+│   └── avar_comparison.png  
+├── requirements.txt  
 
 ---
 
-## How to run (reproducible)
+## Technologies Used
 
-### 1) Create environment
+Python, NumPy, pandas, SciPy, arch, matplotlib, yfinance
 
-```bash
-python -m venv .venv
-# mac/linux
-source .venv/bin/activate
-# windows
-# .venv\Scripts\activate
+---
+
+## How to Run
+
 pip install -r requirements.txt
-```
 
-### 2) Run the notebook
-
-```bash
-jupyter lab
-# open notebooks/project3_replication.ipynb
-```
+Run notebook in notebooks directory.
 
 ---
 
-## Results snapshot (what to highlight to recruiters)
+## Financial Implications
 
-In your GitHub README, the most recruiter-friendly story is:
+This project demonstrates:
 
-1. **Problem:** Gaussian VaR fails in crises (underestimates tail loss frequency).
-2. **Method:** Fit GARCH-type models with Normal vs Student-t innovations.
-3. **Validation:** Use PIT + KS/AD for distribution fit; CLR/BLR for VaR calibration.
-4. **Impact:** Student-t improves coverage/tail calibration; AVaR is more informative than VaR.
-
-See `report/Project3_Report.pdf` for the full write-up and tables/figures.
+- Gaussian models underestimate extreme risk
+- Heavy-tailed models improve forecast accuracy
+- Expected Shortfall better captures tail severity
+- Distribution assumptions materially affect risk estimates
 
 ---
 
-## Limitations & next steps (planned extensions)
+## Future Improvements
 
-- Add **true ARMA(1,1)** mean (with MA term) rather than AR-only mean.
-- Implement **tempered stable** innovations (CTS/MTS/RDTS) to match Kim et al. (2011) more closely.
-- Use a **rolling-window** backtest (e.g., 10y rolling estimation, 1d VaR/ES forecasts).
-- Compare against **EWMA** and **Filtered Historical Simulation (FHS)** baselines.
-- Package the pipeline as a `python -m kim2011_risk.run` CLI script with config-driven experiments.
+- Tempered stable distributions
+- Regime-switching models
+- Rolling estimation windows
+- Multivariate risk modelling
 
 ---
 
-## Citation
+## References
 
-Kim, Y. S., Rachev, S. T., Bianchi, M. L., Mitov, I., & Fabozzi, F. J. (2011).
-*Time series analysis for financial market meltdowns.* Journal of Banking & Finance, 35, 1879–1891.
+Kim et al. (2011)  
+Time series analysis for financial market meltdowns  
+Journal of Banking & Finance
+
+---
+
+## Author
+
+Neil Tamhankar  
+Master of Financial Mathematics — Monash University  
+Quantitative Finance | Risk Modelling
