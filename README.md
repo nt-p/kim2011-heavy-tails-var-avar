@@ -375,7 +375,7 @@ Expected Shortfall provides superior tail risk measurement.
 
 # References
 
-[Kim et al.(2011)Kim, Rachev, Bianchi, Mitov, and Fabozzi] Kim, Y. S., S. T. Rachev, M. L.
+Kim, Y. S., S. T. Rachev, M. L.
 Bianchi, I. Mitov, and F. J. Fabozzi. 2011. Time series analysis for financial market
 meltdowns. Journal of Banking \& Finance 35:1879–1891.
 
